@@ -1,0 +1,240 @@
+---
+title: "StudentAnalysis"
+output: html_document
+date: "2023-04-28"
+---
+
+First, we will load all necessary libraries.
+
+```{r}
+library("readxl")
+library("ggplot2")
+library("dplyr")
+
+```
+
+## Inputting The Data Set
+
+To load in the file.
+```{r}
+dfStudentDat <- read.csv(file = "C:/Users/blueb/OneDrive/Desktop/StudentGradeAnalysis/student_data.csv")
+head(dfStudentDat, n =  5)
+```
+Confirming that a datframe is achieved.
+```{r}
+class(dfStudentDat)
+```
+
+Column information.
+```{txt}
+# Attributes for both student-mat.csv (Math course) and student-por.csv (Portuguese language course) datasets:
+1 school - student's school (binary: 'GP' - Gabriel Pereira or 'MS' - Mousinho da Silveira)
+2 sex - student's sex (binary: 'F' - female or 'M' - male)
+3 age - student's age (numeric: from 15 to 22)
+4 address - student's home address type (binary: 'U' - urban or 'R' - rural)
+5 famsize - family size (binary: 'LE3' - less or equal to 3 or 'GT3' - greater than 3)
+6 Pstatus - parent's cohabitation status (binary: 'T' - living together or 'A' - apart)
+7 Medu - mother's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â€“ 5th to 9th grade, 3 â€“ secondary education or 4 â€“ higher education)
+8 Fedu - father's education (numeric: 0 - none, 1 - primary education (4th grade), 2 â€“ 5th to 9th grade, 3 â€“ secondary education or 4 â€“ higher education)
+9 Mjob - mother's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+10 Fjob - father's job (nominal: 'teacher', 'health' care related, civil 'services' (e.g. administrative or police), 'at_home' or 'other')
+11 reason - reason to choose this school (nominal: close to 'home', school 'reputation', 'course' preference or 'other')
+12 guardian - student's guardian (nominal: 'mother', 'father' or 'other')
+13 traveltime - home to school travel time (numeric: 1 - <15 min., 2 - 15 to 30 min., 3 - 30 min. to 1 hour, or 4 - >1 hour)
+14 studytime - weekly study time (numeric: 1 - <2 hours, 2 - 2 to 5 hours, 3 - 5 to 10 hours, or 4 - >10 hours)
+15 failures - number of past class failures (numeric: n if 1<=n<3, else 4)
+16 schoolsup - extra educational support (binary: yes or no)
+17 famsup - family educational support (binary: yes or no)
+18 paid - extra paid classes within the course subject (Math or Portuguese) (binary: yes or no)
+19 activities - extra-curricular activities (binary: yes or no)
+20 nursery - attended nursery school (binary: yes or no)
+21 higher - wants to take higher education (binary: yes or no)
+22 internet - Internet access at home (binary: yes or no)
+23 romantic - with a romantic relationship (binary: yes or no)
+24 famrel - quality of family relationships (numeric: from 1 - very bad to 5 - excellent)
+25 freetime - free time after school (numeric: from 1 - very low to 5 - very high)
+26 goout - going out with friends (numeric: from 1 - very low to 5 - very high)
+27 Dalc - workday alcohol consumption (numeric: from 1 - very low to 5 - very high)
+28 Walc - weekend alcohol consumption (numeric: from 1 - very low to 5 - very high)
+29 health - current health status (numeric: from 1 - very bad to 5 - very good)
+30 absences - number of school absences (numeric: from 0 to 93)
+
+# these grades are related with the course subject, Math or Portuguese:
+31 G1 - first period grade (numeric: from 0 to 20)
+31 G2 - second period grade (numeric: from 0 to 20)
+32 G3 - final grade (numeric: from 0 to 20, output target)
+```
+
+
+For this study, we will compare variables with the final scores, regardless of which school the student attended. 
+
+```{r}
+#Drop the first column, the school attended.
+df_Data_1 <- dfStudentDat[-c(1)]
+head(df_Data_1, n = 5)
+```
+```{r}
+#number of rows -> number of students
+nrow(df_Data_1) 
+```
+
+
+96% confidence interval estimation of the mean final grade (out of 20)
+
+Checking conditions for t-test:
+  - Sample is random 
+  - Population standard deviation is unknown
+  - sample size(n = 395) > 30
+  
+```{r}
+#FinalGrade will only have column of final grade
+FinalGrade <- df_Data_1$G3
+#t. test
+t.test(FinalGrade, conf.level = 0.96)
+
+```
+
+
+```{r}
+hist(FinalGrade, ylab = "Number of Students", xlab = "Final Grade", main ="Final Mark (Out of 20)")
+
+```
+
+We are 96% confident that the mean final grade in this data set is between 9.94 and 10.89.
+
+# Bivariate Analysis
+
+### Question: Are the final marks between male and female students the same? 
+
+Comparison between sex and final mark. 
+
+
+```{r}
+#obtaining the columns of sex and final mark(G3)
+dfSexMark <- select(df_Data_1, sex, G3)
+head(dfSexMark, n = 5)
+```
+
+
+
+F test done in 95% confidence interval (a = 0.05). 
+
+𝝈1 is the standard deviation of the final mark of male students.
+𝝈2 is the standard deviation of the final mark of female students.
+
+H0: 𝝈1 = 𝝈2
+H1: 𝝈1 ≠ 𝝈2
+
+```{r}
+df_maleGrade <- dfSexMark[dfSexMark$sex == "M",]
+# df_maleGrade
+
+df_femaleGrade <- dfSexMark[dfSexMark$sex == "F",]
+# df_femaleGrade
+
+#F test to check type of t-test.
+var.test(df_femaleGrade$G3, df_maleGrade$G3)
+```
+
+p-value = 0.6989
+a = 0.05
+
+since p-value > a, we fail to reject the null hypothesis. Thus, a pooled t-test is to be used.
+
+
+
+
+H0: The final mark of male students is the same as female students.
+H1: The final mark of female students is not the same as male students
+
+Pooled T test in 95% confidence interval (a = 0.05).
+```{r}
+#pooled t-test, var.equal set to 'TRUE'
+t.test(df_femaleGrade$G3,df_maleGrade$G3, alternative = "two.sided" ,var.equal = TRUE)
+
+```
+
+According to the pooled t-test, the p-value is 0.03987, which is smaller than the alpha value of 0.05. 
+Since p-value < a, we reject the null hypothesis.
+
+Therefore, we conclude that the final grade between male students and female students is not the same and a difference exists. 
+
+
+---------------------------------------------------------------------------------------------------------------------
+
+### Question: Do students who live in urban areas score higher than students who live in rural areas?
+
+```{r}
+df_rural_FinalGrade <- select(df_Data_1, address, G3)
+head(df_rural_FinalGrade, n = 5)
+```
+
+
+
+
+F test done in 95% confidence interval (a = 0.05). 
+
+𝝈1 is the standard deviation of the final mark of students with urban address.
+𝝈2 is the standard deviation of the final mark of studetns with rural address.
+
+H0: 𝝈1 = 𝝈2
+H1: 𝝈1 ≠ 𝝈2
+
+```{r}
+df_urbanGrade <- df_rural_FinalGrade[df_rural_FinalGrade$address == "U",]
+
+
+df_ruralGrade <- df_rural_FinalGrade[df_rural_FinalGrade$address == "R",]
+
+# #F test to check type of t-test.
+var.test(df_urbanGrade$G3, df_ruralGrade$G3)
+```
+
+
+p-value = 0.886
+a = 0.05
+
+since p-value > a, we fail to reject the null hypothesis. Thus, a pooled t-test is to be used.
+
+
+
+
+
+---------------------------------------------------------------------------------------------------
+
+
+```{r}
+results = lm(G3 ~ absences, data = df_Data_1)
+results
+```
+
+```{r}
+summary(results)
+```
+ 
+ 
+```{r}
+anova(results)
+```
+```{r}
+plot(df_Data_1$absences, df_Data_1$G3,
+     main = "Final Mark and Number of Absences",
+     xlab = "Number of Absences",
+     ylab = "Final Mark (out of 20)")
+
+abline(lm(df_Data_1$G3 ~ df_Data_1$absences))
+
+```
+ 
+ 
+
+```{r}
+ggplot(df_Data_1, aes(x=absences, y= G3)) +
+    geom_point() +
+    ggtitle("Final Mark and Number of Absences")+
+    xlab("Absences") +
+    ylab("Final Mark (out of 20)") +
+    geom_smooth(method=lm, se=FALSE)
+```
+
+
